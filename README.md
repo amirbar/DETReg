@@ -1,5 +1,7 @@
 # DETReg: Unsupervised Pretraining with Region Priors for Object Detection
+### [Amir Bar](https://amirbar.net), [Xin Wang](https://xinw.ai/), [Vadim Kantorov](http://vadimkantorov.com/), [Colorado J Reed](https://people.eecs.berkeley.edu/~cjrd/), [Roei Herzig](https://roeiherz.github.io/), [Gal Chechik](https://chechiklab.biu.ac.il/), [Anna Rohrbach](https://anna-rohrbach.net/), [Trevor Darrell](https://people.eecs.berkeley.edu/~trevor/), [Amir Globerson](http://www.cs.tau.ac.il/~gamir/)
 ![DETReg](./figs/illustration.png)
+  
 
 This repository is the implementation of DETReg.
 
@@ -150,44 +152,19 @@ To evaluate a finetuned model, use the following command from the project basedi
 ./configs/<config file>.sh --resume exps/<config file>/checkpoint.pth --eval
 ```
 
+## Cite
+If you found this code helpful, feel free to cite our work: 
+
+```bibtext
+@misc{bar2021detreg,
+      title={DETReg: Unsupervised Pretraining with Region Priors for Object Detection},
+      author={Amir Bar and Xin Wang and Vadim Kantorov and Colorado J Reed and Roei Herzig and Gal Chechik and Anna Rohrbach and Trevor Darrell and Amir Globerson},
+      year={2021},
+      eprint={2106.04550},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV}
+}
+```
 
 ## Related Works
 DETReg make use of previous works code base such as DETR, UP-DETR, Deformable DETR and SwAV. If you found DETReg useful, please also consider citing these works as well.
-
-DETR
-```bibtex
-@article{carion2020end,
-  title={End-to-End Object Detection with Transformers},
-  author={Carion, Nicolas and Massa, Francisco and Synnaeve, Gabriel and Usunier, Nicolas and Kirillov, Alexander and Zagoruyko, Sergey},
-  journal={ECCV},
-  year={2020}
-}
-```
-Deformable DETR
-```bibtex
-@article{zhu2020deformable,
-  title={Deformable DETR: Deformable Transformers for End-to-End Object Detection},
-  author={Zhu, Xizhou and Su, Weijie and Lu, Lewei and Li, Bin and Wang, Xiaogang and Dai, Jifeng},
-  journal={arXiv preprint arXiv:2010.04159},
-  year={2020}
-}
-```
-UP-DETR
-```bibtex
-@article{dai2020up,
-  title={{UP-DETR}: Unsupervised Pre-training for Object Detection with Transformers},
-  author={Dai, Zhigang and Cai, Bolun and Lin, Yugeng and Chen, Junying},
-  journal={CVPR},
-  year={2021}
-}
-```
-
-SwAV
-```bibtext
-@article{caron2020unsupervised,
-  title={Unsupervised learning of visual features by contrasting cluster assignments},
-  author={Caron, Mathilde and Misra, Ishan and Mairal, Julien and Goyal, Priya and Bojanowski, Piotr and Joulin, Armand},
-  journal={NeurIPS},
-  year={2020}
-}
-```
