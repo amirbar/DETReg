@@ -167,4 +167,7 @@ If you found this code helpful, feel free to cite our work:
 ```
 
 ## Related Works
-DETReg make use of previous works code base such as DETR, UP-DETR, Deformable DETR and SwAV. If you found DETReg useful, please also consider citing these works as well.
+If you found DETReg useful, consider checking out these related works as well: [ReSim](https://github.com/Tete-Xiao/ReSim), [SwAV](https://github.com/facebookresearch/swav), [DETR](https://github.com/facebookresearch/detr), [UP-DETR](https://github.com/dddzg/up-detr), and [Deformable DETR](https://github.com/fundamentalvision/Deformable-DETR).
+
+## Acknowlegments
+DETReg builds on previous works code base such as [Deformable DETR](https://github.com/fundamentalvision/Deformable-DETR) and [UP-DETR](https://github.com/dddzg/up-detr). If you found DETReg useful please consider citing these works as well.
