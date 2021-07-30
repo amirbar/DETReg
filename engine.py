@@ -133,11 +133,7 @@ def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, out
                 
                 torch.save(dict(image_id = image_id, target = target, pred_logits = pred_logits, pred_boxes = pred_boxes, pred_boxes_ = pred_boxes_), os.path.join(output_dir, str(image_id) + '.pt'))
 
-        # indices = outputs['pred_logits'][0].softmax(-1)[..., 1].sort(descending=True)[1][:10]
-        # boxes = torch.stack([outputs['pred_boxes'][0][i] for i in indices]).unsqueeze(0)
-        # logits = torch.stack([outputs['pred_logits'][0][i] for i in indices]).unsqueeze(0)
-        # plot_prediction(samples.tensors[0:1], boxes, logits, plot_prob=False)
-        # from matplotlib import pyplot as plt; plt.show()
+
         loss_dict = criterion(outputs, targets)
         weight_dict = criterion.weight_dict
 
