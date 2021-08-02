@@ -103,7 +103,7 @@ wget https://github.com/amirbar/DETReg/releases/download/1.0.0/ss_box_cache.tar.
 tar -xf ss_box_cache.tar.gz
 ```
 
-### Alternatively, you can precompute Selective Search boxes:
+### Alternatively, you can compute Selective Search boxes yourself:
 To create selective search boxes for ImageNet100 on a single machine, run the following command (set num_processes): 
 ```bash
 python -m datasets.cache_ss --dataset imagenet100 --part 0 --num_m 1 --num_p <num_processes_to_use> 
