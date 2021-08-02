@@ -3,12 +3,12 @@
 ![DETReg](./figs/illustration.png)
   
 
-This repository is the implementation of DETReg.
+This repository is the implementation of DETReg, see [Project Page](https://amirbar.net/detreg).
 
 ## Release
 - [x] COCO training code and eval - DONE
+- [x] Pretrained models - DONE
 - [ ] Pascal VOC training code and eval- TODO
-- [ ] Pretrained models - TODO
 
 ## Introduction
 
@@ -95,7 +95,15 @@ code_root/
         	├── instances_train2017.json
         	└── instances_val2017.json
 ```
-### Create Selective Search boxes
+### Create ImageNet Selective Search boxes:
+Download the precomputed ImageNet boxes and extract in the cache folder:
+```
+mkdir -p <code_root>/cache/ilsvrc && cd <code_root>/cache/ilsvrc 
+wget https://github.com/amirbar/DETReg/releases/download/1.0.0/ss_box_cache.tar.gz
+tar -xf ss_box_cache.tar.gz
+```
+
+### Alternatively, you can precompute Selective Search boxes:
 To create selective search boxes for ImageNet100 on a single machine, run the following command (set num_processes): 
 ```bash
 python -m datasets.cache_ss --dataset imagenet100 --part 0 --num_m 1 --num_p <num_processes_to_use> 
@@ -118,7 +126,7 @@ The command for pretraining DETReg on 8 GPUs on ImageNet100 is as following:
 ```bash
 GPUS_PER_NODE=8 ./tools/run_dist_launch.sh 8 ./configs/DETReg_top30_in100.sh --batch_size 24 --num_workers 8
 ```
-Training takes around 1.5 days with 8 NVIDIA V100 GPUs.
+Training takes around 1.5 days with 8 NVIDIA V100 GPUs, you can download a pretrained model (see below) if you want to skip this step.
 
 After pretraining, a checkpoint is saved in ```exps/DETReg_top30_in100/checkpoint.pth```. To fine tune it over different coco settings use the following commands:
 Fine tuning on full COCO (should take 2 days with 8 NVIDIA V100 GPUs):
@@ -151,6 +159,12 @@ To evaluate a finetuned model, use the following command from the project basedi
 ```bash
 ./configs/<config file>.sh --resume exps/<config file>/checkpoint.pth --eval
 ```
+
+### Pretrained Models
+
+- [Pretrained ImageNet weights](https://github.com/amirbar/DETReg/releases/download/1.0.0/checkpoint_imagenet.pth) 
+- [Finetuned COCO weights](https://github.com/amirbar/DETReg/releases/download/1.0.0/full_coco_finetune.pth)
+
 
 ## Cite
 If you found this code helpful, feel free to cite our work: 
