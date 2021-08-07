@@ -166,7 +166,7 @@ To evaluate a finetuned model, use the following command from the project basedi
 - [Finetuned COCO weights](https://github.com/amirbar/DETReg/releases/download/1.0.0/full_coco_finetune.pth)
 
 
-## Cite
+## Citation
 If you found this code helpful, feel free to cite our work: 
 
 ```bibtext
@@ -185,3 +185,6 @@ If you found DETReg useful, consider checking out these related works as well: [
 
 ## Acknowlegments
 DETReg builds on previous works code base such as [Deformable DETR](https://github.com/fundamentalvision/Deformable-DETR) and [UP-DETR](https://github.com/dddzg/up-detr). If you found DETReg useful please consider citing these works as well.
+
+## License
+DETReg is released under the Apache 2.0 license. Please see the [LICENSE](https://github.com/amirbar/DETReg/blob/main/LICENSE) file for more information.
