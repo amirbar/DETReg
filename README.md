@@ -144,11 +144,11 @@ GPUS_PER_NODE=4 ./tools/run_dist_launch.sh 4 ./configs/DETReg_fine_tune_2pct_coc
 ```
 Fine tuning on 5%
 ```bash
-GPUS_PER_NODE=4 ./tools/run_dist_launch.sh 4 ./configs/DETReg_fine_tune_5pct_coco.sh --batch_size 2
+GPUS_PER_NODE=8 ./tools/run_dist_launch.sh 8 ./configs/DETReg_fine_tune_5pct_coco.sh --batch_size 1
 ```
 Fine tuning on 10%
 ```bash
-GPUS_PER_NODE=4 ./tools/run_dist_launch.sh 4 ./configs/DETReg_fine_tune_10pct_coco.sh --batch_size 2
+GPUS_PER_NODE=8 ./tools/run_dist_launch.sh 8 ./configs/DETReg_fine_tune_10pct_coco.sh --batch_size 1
 ```
 
 
