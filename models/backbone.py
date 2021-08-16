@@ -170,7 +170,7 @@ def build_swav_backbone(args, device):
 def build_swav_backbone_old(args, device):
     train_backbone = False
     return_interm_layers = args.masks or (args.num_feature_levels > 1)
-    model = Backbone(args.backbone, train_backbone, return_interm_layers, args.dilation, load_backbone='swav').to(device)
+    model = Backbone(args.backbone, train_backbone, return_interm_layers, args.dilation, load_backbone=args.load_backbone).to(device)
     def model_func(elem):
         return model(elem)['0'].mean(dim=(2,3))
     return model_func
