@@ -4,15 +4,15 @@ import datetime
 import functools
 import subprocess
 import xml.etree.ElementTree as ET
-
 import numpy as np
 import torch
 
 from util.misc import all_gather
 
+
 class VocEvaluator:
-    def __init__(self, voc_gt, iou_types, use_07_metric = True, ovthresh = list(range(50, 100, 5))):
-        assert tuple(iou_types) == ('bbox', )
+    def __init__(self, voc_gt, iou_types, use_07_metric=True, ovthresh=list(range(50, 100, 5))):
+        assert tuple(iou_types) == ('bbox',)
         self.use_07_metric = use_07_metric
         self.ovthresh = ovthresh
 
@@ -20,57 +20,60 @@ class VocEvaluator:
         self.eps = torch.finfo(torch.float64).eps
         self.num_classes = len(self.voc_gt.CLASS_NAMES)
         self.AP = torch.zeros(self.num_classes, len(ovthresh))
-        self.coco_eval = dict(bbox = lambda: None)
+        self.coco_eval = dict(bbox=lambda: None)
         self.coco_eval['bbox'].stats = torch.tensor([])
         self.coco_eval['bbox'].eval = dict()
-        
+
         self.img_ids = []
         self.lines = []
         self.lines_cls = []
-    
+
     def update(self, predictions):
         for img_id, pred in predictions.items():
             pred_boxes, pred_labels, pred_scores = [pred[k].cpu() for k in ['boxes', 'labels', 'scores']]
-            image_id = self.voc_gt.convert_image_id(int(img_id), to_string = True)
+            image_id = self.voc_gt.convert_image_id(int(img_id), to_string=True)
             self.img_ids.append(img_id)
 
-            for (xmin, ymin, xmax, ymax), cls, score in zip(pred_boxes.tolist(), pred_labels.tolist(), pred_scores.tolist()):
+            for (xmin, ymin, xmax, ymax), cls, score in zip(pred_boxes.tolist(), pred_labels.tolist(),
+                                                            pred_scores.tolist()):
                 xmin += 1
                 ymin += 1
                 self.lines.append(f"{image_id} {score:.3f} {xmin:.1f} {ymin:.1f} {xmax:.1f} {ymax:.1f}")
                 self.lines_cls.append(cls)
-        
+
     def synchronize_between_processes(self):
-        self.img_ids = torch.tensor(self.img_ids, dtype = torch.int64)
-        self.lines_cls = torch.tensor(self.lines_cls, dtype = torch.int64)
+        self.img_ids = torch.tensor(self.img_ids, dtype=torch.int64)
+        self.lines_cls = torch.tensor(self.lines_cls, dtype=torch.int64)
         self.img_ids, self.lines, self.lines_cls = self.merge(self.img_ids, self.lines, self.lines_cls)
 
     def merge(self, img_ids, lines, lines_cls):
         flatten = lambda ls: [s for l in ls for s in l]
-        
+
         all_img_ids = torch.cat(all_gather(img_ids))
         all_lines_cls = torch.cat(all_gather(lines_cls))
         all_lines = flatten(all_gather(lines))
-        
+
         # keep only unique (and in sorted order) images
-        #merged_img_ids, idx = np.unique(all_img_ids.numpy(), return_index=True); merged_img_ids, idx = torch.as_tensor(merged_img_ids), torch.as_tensor(idx);
-        
-        #merged_lines_cls = all_lines_cls[idx]
-        #merged_lines = [all_lines[i] for i in idx.tolist()]
+        # merged_img_ids, idx = np.unique(all_img_ids.numpy(), return_index=True); merged_img_ids, idx = torch.as_tensor(merged_img_ids), torch.as_tensor(idx);
+
+        # merged_lines_cls = all_lines_cls[idx]
+        # merged_lines = [all_lines[i] for i in idx.tolist()]
 
         return all_img_ids, all_lines, all_lines_cls
-        #return merged_img_ids, merged_lines, merged_lines_cls
+        # return merged_img_ids, merged_lines, merged_lines_cls
 
     def accumulate(self):
         for class_label_ind, class_label in enumerate(self.voc_gt.CLASS_NAMES):
             lines_by_class = [l + '\n' for l, c in zip(self.lines, self.lines_cls.tolist()) if c == class_label_ind]
             for ovthresh_ind, ovthresh in enumerate(self.ovthresh):
-                self.AP[class_label_ind, ovthresh_ind] = voc_eval(lines_by_class, self.voc_gt.annotations, self.voc_gt.image_set, class_label, ovthresh = ovthresh / 100.0, use_07_metric = self.use_07_metric)[-1]
-                
-       
-        self.eval = dict(params = dict(usef_07_metric = self.use_07_metric, ovthresh = self.ovthresh), date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), AP = self.AP)
+                self.AP[class_label_ind, ovthresh_ind] = \
+                voc_eval(lines_by_class, self.voc_gt.annotations, self.voc_gt.image_set, class_label,
+                         ovthresh=ovthresh / 100.0, use_07_metric=self.use_07_metric)[-1]
 
-    def summarize(self, fmt = '{:.06f}'):
+        self.eval = dict(params=dict(usef_07_metric=self.use_07_metric, ovthresh=self.ovthresh),
+                         date=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), AP=self.AP)
+
+    def summarize(self, fmt='{:.06f}'):
         o50, o75 = map(self.ovthresh.index, [50, 75])
         mAP = float(self.AP.mean())
         mAP50 = float(self.AP[:, o50].mean())
@@ -81,8 +84,9 @@ class VocEvaluator:
         print('---AP50---')
         for class_name, ap in zip(self.voc_gt.CLASS_NAMES, self.AP[:, o50].cpu().tolist()):
             print(class_name, fmt.format(ap))
-        self.coco_eval['bbox'].stats = torch.cat([self.AP[:, o50].mean(dim = 0, keepdim = True), self.AP[:, o75].mean(dim = 0, keepdim = True), self.AP.flatten().mean(dim = 0, keepdim = True), self.AP.flatten()])
-    
+        self.coco_eval['bbox'].stats = torch.cat(
+            [self.AP[:, o50].mean(dim=0, keepdim=True), self.AP[:, o75].mean(dim=0, keepdim=True),
+             self.AP.flatten().mean(dim=0, keepdim=True), self.AP.flatten()])
 
 
 def voc_ap(rec, prec, use_07_metric=False):
@@ -118,7 +122,8 @@ def voc_ap(rec, prec, use_07_metric=False):
         ap = np.sum((mrec[i + 1] - mrec[i]) * mpre[i + 1])
     return ap
 
-@functools.lru_cache(maxsize = None)
+
+@functools.lru_cache(maxsize=None)
 def parse_rec(filename):
     """ Parse a PASCAL VOC xml file """
     tree = ET.parse(filename)
@@ -139,14 +144,12 @@ def parse_rec(filename):
     return objects
 
 
-
 def voc_eval(detpath,
              annopath,
              imagesetfile,
              classname,
              ovthresh=0.5,
              use_07_metric=False):
-    
     # --------------------------------------------------------
     # Fast/er R-CNN
     # Licensed under The MIT License [see LICENSE for details]
@@ -171,6 +174,7 @@ def voc_eval(detpath,
     [use_07_metric]: Whether to use VOC07's 11 point AP computation
         (default False)
     """
+
     def iou(BBGT, bb):
         ixmin = np.maximum(BBGT[:, 0], bb[0])
         iymin = np.maximum(BBGT[:, 1], bb[1])
@@ -189,7 +193,7 @@ def voc_eval(detpath,
         ovmax = np.max(overlaps)
         jmax = np.argmax(overlaps)
         return ovmax, jmax
-    
+
     # assumes detections are in detpath.format(classname)
     # assumes annotations are in annopath.format(imagename)
     # assumes imagesetfile is a text file with each line an image name
@@ -238,7 +242,7 @@ def voc_eval(detpath,
     image_ids = [x[0] for x in splitlines]
     confidence = np.array([float(x[1]) for x in splitlines])
     BB = np.array([[float(z) for z in x[2:]] for x in splitlines])
-    
+
     if BB.size == 0:
         return 0, 0, 0
 
@@ -282,21 +286,24 @@ def voc_eval(detpath,
 
     return rec, prec, ap
 
-def bbox_nms(boxes, scores, overlap_threshold = 0.4, score_threshold = 0.0, mask = False):
-    
-    def overlap(box1, box2 = None, rectint = False, eps = 1e-6):
-        area = lambda boxes = None, x1 = None, y1 = None, x2 = None, y2 = None: (boxes[..., 2] - boxes[..., 0]) * (boxes[..., 3] - boxes[..., 1]) if boxes is not None else (x2 - x1).clamp(min = 0) * (y2 - y1).clamp(min = 0)
+
+def bbox_nms(boxes, scores, overlap_threshold=0.4, score_threshold=0.0, mask=False):
+    def overlap(box1, box2=None, rectint=False, eps=1e-6):
+        area = lambda boxes=None, x1=None, y1=None, x2=None, y2=None: (boxes[..., 2] - boxes[..., 0]) * (
+                    boxes[..., 3] - boxes[..., 1]) if boxes is not None else (x2 - x1).clamp(min=0) * (y2 - y1).clamp(
+            min=0)
 
         if box2 is None and not isinstance(box1, list) and box1.dim() == 3:
             return torch.stack(list(map(overlap, box1)))
-        b1, b2 = [(b if b.dim() == 2 else b.unsqueeze(0)).t().contiguous() for b in [box1, (box2 if box2 is not None else box1)]]
+        b1, b2 = [(b if b.dim() == 2 else b.unsqueeze(0)).t().contiguous() for b in
+                  [box1, (box2 if box2 is not None else box1)]]
 
         xx1 = torch.max(b1[0].unsqueeze(1), b2[0].unsqueeze(0))
         yy1 = torch.max(b1[1].unsqueeze(1), b2[1].unsqueeze(0))
         xx2 = torch.min(b1[2].unsqueeze(1), b2[2].unsqueeze(0))
         yy2 = torch.min(b1[3].unsqueeze(1), b2[3].unsqueeze(0))
-        
-        inter = area(x1 = xx1, y1 = yy1, x2 = xx2, y2 = yy2)
+
+        inter = area(x1=xx1, y1=yy1, x2=xx2, y2=yy2)
         return inter / (area(b1.t()).unsqueeze(1) + area(b2.t()).unsqueeze(0) - inter + eps) if not rectint else inter
 
     O = overlap(boxes)
@@ -304,7 +311,7 @@ def bbox_nms(boxes, scores, overlap_threshold = 0.4, score_threshold = 0.0, mask
     M = scores.gather(0, I).ge(score_threshold)
     M = M if M.any() else M.fill_(1)
     pick = []
-    
+
     for i, m in zip(I.t(), M.t()):
         p = []
         i = i[m]
@@ -313,11 +320,13 @@ def bbox_nms(boxes, scores, overlap_threshold = 0.4, score_threshold = 0.0, mask
             m = O[:, i[-1]][i].lt(overlap_threshold)
             m[-1] = 0
             i = i[m]
-        pick.append(torch.tensor(p + i.tolist(), dtype = torch.int64))
+        pick.append(torch.tensor(p + i.tolist(), dtype=torch.int64))
 
-    return pick if not mask else torch.stack([torch.zeros(len(scores), dtype = torch.bool).scatter_(0, p, 1) for p in pick])
+    return pick if not mask else torch.stack(
+        [torch.zeros(len(scores), dtype=torch.bool).scatter_(0, p, 1) for p in pick])
 
-def package_submission(out_dir, image_file_name, class_labels, VOCYEAR, SUBSET, TASK, tar = True, **kwargs):
+
+def package_submission(out_dir, image_file_name, class_labels, VOCYEAR, SUBSET, TASK, tar=True, **kwargs):
     def cls(file_path, class_label_ind, scores):
         with open(file_path, 'w') as f:
             f.writelines(map('{} {}\n'.format, image_file_name, scores[:, class_label_ind].tolist()))
@@ -326,46 +335,62 @@ def package_submission(out_dir, image_file_name, class_labels, VOCYEAR, SUBSET, 
         zipped = []
         for example_idx, basename in enumerate(image_file_name):
             I = keep[example_idx][class_label_ind]
-            zipped.extend((basename, s) + tuple(p) for s, p in zip(scores[example_idx][I, class_label_ind].tolist(), proposals[example_idx][I, :4].add(1).tolist()))
+            zipped.extend((basename, s) + tuple(p) for s, p in zip(scores[example_idx][I, class_label_ind].tolist(),
+                                                                   proposals[example_idx][I, :4].add(1).tolist()))
         with open(file_path, 'w') as f:
             f.writelines(map('{} {} {:.0f} {:.0f} {:.0f} {:.0f} \n'.format, *zip(*zipped)))
 
     task_a, task_b = TASK.split('_')
     resdir = os.path.join(out_dir, 'results')
     respath = os.path.join(resdir, VOCYEAR, 'Main', '%s_{}_{}_%s.txt'.format(task_b, SUBSET))
-    
+
     if os.path.exists(resdir):
         shutil.rmtree(resdir)
     os.makedirs(os.path.join(resdir, VOCYEAR, 'Main'))
-    
+
     for class_label_ind, class_label in enumerate(class_labels):
-        dict(det = det, cls = cls)[task_b](respath.replace('%s', '{}').format(task_a, class_label), class_label_ind, **kwargs)
-    
+        dict(det=det, cls=cls)[task_b](respath.replace('%s', '{}').format(task_a, class_label), class_label_ind,
+                                       **kwargs)
+
     if tar:
-        subprocess.check_call(['tar', '-czf', 'results-{}-{}-{}.tar.gz'.format(VOCYEAR, TASK, SUBSET), 'results'], cwd = out_dir)
-    
+        subprocess.check_call(['tar', '-czf', 'results-{}-{}-{}.tar.gz'.format(VOCYEAR, TASK, SUBSET), 'results'],
+                              cwd=out_dir)
+
     return respath
 
-def detection_mean_ap(out_dir, image_file_name, class_labels, VOCYEAR, SUBSET, VOC_DEVKIT_VOCYEAR, scores = None, boxes = None, nms_score_threshold = 1e-4, nms_overlap_threshold = 0.4, tar = False, octave = False, cmd = 'octave --eval', env = None, stdout_stderr = open(os.devnull, 'wb'), do_nms = True):
-    
+
+def detection_mean_ap(out_dir, image_file_name, class_labels, VOCYEAR, SUBSET, VOC_DEVKIT_VOCYEAR, scores=None,
+                      boxes=None, nms_score_threshold=1e-4, nms_overlap_threshold=0.4, tar=False, octave=False,
+                      cmd='octave --eval', env=None, stdout_stderr=open(os.devnull, 'wb'), do_nms=True):
     if scores is not None:
-        nms = list(map(lambda s, p: bbox_nms(p, s, overlap_threshold = nms_overlap_threshold, score_threshold = nms_score_threshold), scores,  boxes )) if do_nms else [torch.arange(len(p)) for p in boxes]
+        nms = list(map(lambda s, p: bbox_nms(p, s, overlap_threshold=nms_overlap_threshold,
+                                             score_threshold=nms_score_threshold), scores, boxes)) if do_nms else [
+            torch.arange(len(p)) for p in boxes]
 
     else:
-        nms =  torch.arange(len(class_labels)).unsqueeze(0).unsqueeze(-1).expand(len(image_file_name), len(class_labels), 1)
+        nms = torch.arange(len(class_labels)).unsqueeze(0).unsqueeze(-1).expand(len(image_file_name), len(class_labels),
+                                                                                1)
         scores = torch.zeros(len(image_file_name), len(class_labels), len(class_labels))
 
     imgsetpath = os.path.join(VOC_DEVKIT_VOCYEAR, 'ImageSets', 'Main', SUBSET + '.txt')
-    detrespath = package_submission(out_dir, image_file_name, class_labels, VOCYEAR, SUBSET, 'comp4_det', tar = tar, scores = scores, proposals = boxes, nms = nms)
+    detrespath = package_submission(out_dir, image_file_name, class_labels, VOCYEAR, SUBSET, 'comp4_det', tar=tar,
+                                    scores=scores, proposals=boxes, nms=nms)
 
     if octave:
         imgsetpath_fix = os.path.join(out_dir, detection_mean_ap.__name__ + '.txt')
         with open(imgsetpath_fix, 'w') as f:
             f.writelines([line[:-1] + ' -1\n' for line in open(imgsetpath)])
-        procs = [subprocess.Popen(cmd.split() + ["oldpwd = pwd; cd('{}/..'); addpath(fullfile(pwd, 'VOCcode')); VOCinit; cd(oldpwd); VOCopts.testset = '{}'; VOCopts.detrespath = '{}'; VOCopts.imgsetpath = '{}'; classlabel = '{}'; warning('off', 'Octave:possible-matlab-short-circuit-operator'); warning('off', 'Octave:num-to-str'); [rec, prec, ap] = VOCevaldet(VOCopts, 'comp4', classlabel, false); dlmwrite(sprintf(VOCopts.detrespath, 'resu4', classlabel), ap); quit;".format(VOC_DEVKIT_VOCYEAR, SUBSET, detrespath, imgsetpath_fix, class_label)], stdout = stdout_stderr, stderr = stdout_stderr, env = env) for class_label in class_labels]
-        res = list(map(lambda class_label, proc: proc.wait() or float(open(detrespath % ('resu4', class_label)).read()), class_labels, procs))
-    
+        procs = [subprocess.Popen(cmd.split() + [
+            "oldpwd = pwd; cd('{}/..'); addpath(fullfile(pwd, 'VOCcode')); VOCinit; cd(oldpwd); VOCopts.testset = '{}'; VOCopts.detrespath = '{}'; VOCopts.imgsetpath = '{}'; classlabel = '{}'; warning('off', 'Octave:possible-matlab-short-circuit-operator'); warning('off', 'Octave:num-to-str'); [rec, prec, ap] = VOCevaldet(VOCopts, 'comp4', classlabel, false); dlmwrite(sprintf(VOCopts.detrespath, 'resu4', classlabel), ap); quit;".format(
+                VOC_DEVKIT_VOCYEAR, SUBSET, detrespath, imgsetpath_fix, class_label)], stdout=stdout_stderr,
+                                  stderr=stdout_stderr, env=env) for class_label in class_labels]
+        res = list(map(lambda class_label, proc: proc.wait() or float(open(detrespath % ('resu4', class_label)).read()),
+                       class_labels, procs))
+
     else:
-        res = [voc_eval(detrespath.replace('%s', '{}').format('comp4', '{}'), os.path.join(VOC_DEVKIT_VOCYEAR, 'Annotations', '{}.xml'), imgsetpath, class_label, cachedir = os.path.join(out_dir, 'cache_detection_mean_ap_' + SUBSET), use_07_metric = True)[-1] for class_label in class_labels]
+        res = [voc_eval(detrespath.replace('%s', '{}').format('comp4', '{}'),
+                        os.path.join(VOC_DEVKIT_VOCYEAR, 'Annotations', '{}.xml'), imgsetpath, class_label,
+                        cachedir=os.path.join(out_dir, 'cache_detection_mean_ap_' + SUBSET), use_07_metric=True)[-1] for
+               class_label in class_labels]
 
     return torch.tensor(res).mean(), res

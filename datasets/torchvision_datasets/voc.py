@@ -1,4 +1,5 @@
 # partly taken from https://github.com/pytorch/vision/blob/master/torchvision/datasets/voc.py
+import functools
 import torch
 
 import os
@@ -7,6 +8,7 @@ import collections
 
 from torchvision.datasets import VisionDataset
 
+import numpy as np
 import xml.etree.ElementTree as ET
 from PIL import Image
 from torchvision.datasets.utils import download_url, check_integrity, verify_str_arg
@@ -16,7 +18,6 @@ CLASS_NAMES = (
     "chair", "cow", "diningtable", "dog", "horse", "motorbike", "person",
     "pottedplant", "sheep", "sofa", "train", "tvmonitor"
 )
-
 
 DATASET_YEAR_DICT = {
     '2012': {
@@ -89,10 +90,20 @@ class VOCDetection(VisionDataset):
                  image_sets='train',
                  transform=None,
                  target_transform=None,
-                 transforms=None):
+                 transforms=None,
+                 no_cats=False,
+                 filter_pct=-1):
         super(VOCDetection, self).__init__(root, transforms, transform, target_transform)
         self.images = []
         self.annotations = []
+        self.imgids = []
+        self.imgid2annotations = {}
+        self.image_set = []
+
+        self.CLASS_NAMES = CLASS_NAMES
+        self.MAX_NUM_OBJECTS = 64
+        self.no_cats = no_cats
+
         for year, image_set in zip(years, image_sets):
 
             if year == "2007" and image_set == "test":
@@ -110,10 +121,68 @@ class VOCDetection(VisionDataset):
                 raise RuntimeError('Dataset not found or corrupted.' +
                                    ' You can use download=True to download it')
             file_names = self.extract_fns(image_set, voc_root)
+            self.image_set.extend(file_names)
 
             self.images.extend([os.path.join(image_dir, x + ".jpg") for x in file_names])
             self.annotations.extend([os.path.join(annotation_dir, x + ".xml") for x in file_names])
-            assert (len(self.images) == len(self.annotations))
+
+            self.imgids.extend(self.convert_image_id(x, to_integer=True) for x in file_names)
+            self.imgid2annotations.update(dict(zip(self.imgids, self.annotations)))
+
+        if filter_pct > 0:
+            num_keep = float(len(self.imgids)) * filter_pct
+            keep = np.random.choice(np.arange(len(self.imgids)), size=round(num_keep), replace=False).tolist()
+            flt = lambda l: [l[i] for i in keep]
+            self.image_set, self.images, self.annotations, self.imgids = map(flt, [self.image_set, self.images,
+                                                                                   self.annotations, self.imgids])
+
+        assert (len(self.images) == len(self.annotations) == len(self.imgids))
+
+    @staticmethod
+    def convert_image_id(img_id, to_integer=False, to_string=False, prefix='2021'):
+        if to_integer:
+            return int(prefix + img_id.replace('_', ''))
+        if to_string:
+            x = str(img_id)
+            assert x.startswith(prefix)
+            x = x[len(prefix):]
+            if len(x) == 6:
+                return x
+            return x[:4] + '_' + x[4:]
+
+    @functools.lru_cache(maxsize=None)
+    def load_instances(self, img_id):
+        tree = ET.parse(self.imgid2annotations[img_id])
+        target = self.parse_voc_xml(tree.getroot())
+
+        image_id = target['annotation']['filename']
+        instances = []
+        for obj in target['annotation']['object']:
+            cls = obj["name"]
+            # We include "difficult" samples in training.
+            # Based on limited experiments, they don't hurt accuracy.
+            difficult = int(obj["difficult"])
+            # if difficult == 1:
+            # continue
+            bbox = obj["bndbox"]
+            bbox = [float(bbox[x]) for x in ["xmin", "ymin", "xmax", "ymax"]]
+            # Original annotations are integers in the range [1, W or H]
+            # Assuming they mean 1-based pixel indices (inclusive),
+            # a box with annotation (xmin=1, xmax=W) covers the whole image.
+            # In coordinate space this is represented by (xmin=0, xmax=W)
+            bbox[0] -= 1.0
+            bbox[1] -= 1.0
+            instance = dict(
+                category_id=1 if self.no_cats else CLASS_NAMES.index(cls),
+                bbox=bbox,
+                area=(bbox[2] - bbox[0]) * (bbox[3] - bbox[1]),
+                difficult=difficult,
+                image_id=img_id
+            )
+            instances.append(instance)
+
+        assert len(instances) <= self.MAX_NUM_OBJECTS
+        return target, instances
 
     def extract_fns(self, image_set, voc_root):
         splits_dir = os.path.join(voc_root, 'ImageSets/Main')
@@ -131,45 +200,17 @@ class VOCDetection(VisionDataset):
             tuple: (image, target) where target is a dictionary of the XML tree.
         """
         img = Image.open(self.images[index]).convert('RGB')
-        tree = ET.parse(self.annotations[index])
-        target = self.parse_voc_xml(tree.getroot())
-
-        image_id = target['annotation']['filename']
-        
-        instances = []
-        
-        for obj in target['annotation']['object']:
-            cls = obj["name"]
-            # We include "difficult" samples in training.
-            # Based on limited experiments, they don't hurt accuracy.
-            # difficult = int(obj.find("difficult").text)
-            # if difficult == 1:
-            # continue
-            bbox = obj["bndbox"]
-            bbox = [float(bbox[x]) for x in ["xmin", "ymin", "xmax", "ymax"]]
-            # Original annotations are integers in the range [1, W or H]
-            # Assuming they mean 1-based pixel indices (inclusive),
-            # a box with annotation (xmin=1, xmax=W) covers the whole image.
-            # In coordinate space this is represented by (xmin=0, xmax=W)
-            bbox[0] -= 1.0
-            bbox[1] -= 1.0
-            instance = dict(
-                category_id = CLASS_NAMES.index(cls),
-                bbox = bbox,
-                area = (bbox[2] - bbox[0]) * (bbox[3] - bbox[1]),
-            )
-            instances.append(instance)
+        target, instances = self.load_instances(self.imgids[index])
 
         w, h = map(target['annotation']['size'].get, ['width', 'height'])
-        
         target = dict(
-            labels = torch.tensor([i['category_id'] for i in instances], dtype = torch.int64),
-            image_id = torch.tensor([int(image_id.replace('_', '').replace('.jpg', ''))], dtype = torch.int64),
-            area = torch.tensor([i['area'] for i in instances], dtype = torch.float32),
-            boxes = torch.as_tensor([i['bbox'] for i in instances], dtype = torch.float32),
-            orig_size = torch.as_tensor([int(h), int(w)]),
-            size = torch.as_tensor([int(h), int(w)]),
-            iscrowd = torch.zeros(len(instances), dtype = torch.uint8)
+            image_id=torch.tensor([self.imgids[index]], dtype=torch.int64),
+            labels=torch.tensor([i['category_id'] for i in instances], dtype=torch.int64),
+            area=torch.tensor([i['area'] for i in instances], dtype=torch.float32),
+            boxes=torch.as_tensor([i['bbox'] for i in instances], dtype=torch.float32),
+            orig_size=torch.as_tensor([int(h), int(w)]),
+            size=torch.as_tensor([int(h), int(w)]),
+            iscrowd=torch.zeros(len(instances), dtype=torch.uint8)
         )
 
         if self.transforms is not None:
