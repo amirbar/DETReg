@@ -5,11 +5,6 @@
 
 This repository is the implementation of DETReg, see [Project Page](https://amirbar.net/detreg).
 
-## Release
-- [x] COCO training code and eval - DONE
-- [x] Pretrained models - DONE
-- [ ] Pascal VOC training code and eval- TODO
-
 ## Introduction
 
 DETReg is an unsupervised pretraining approach for object **DE**tection with **TR**ansformers using **Reg**ion priors. 
@@ -55,22 +50,17 @@ python test.py
 
 ### Dataset preparation
 
+#### ImageNet/ImageNet100
+Download [ImageNet](https://image-net.org/challenges/LSVRC/2012/) and organize it in the following structure:
 
-Please download [COCO 2017 dataset](https://cocodataset.org/) and [ImageNet](https://image-net.org/challenges/LSVRC/2012/) and organize them as following:
 ```
 code_root/
 └── data/
-    ├── ilsvrc/
+    └── ilsvrc/
           ├── train/
           └── val/
-    └── MSCoco/
-        ├── train2017/
-        ├── val2017/
-        └── annotations/
-        	├── instances_train2017.json
-        	└── instances_val2017.json
 ```
-Note that in this work we used the ImageNet100 dataset, which is x10 smaller than ImageNet. To create ImageNet100 run the following command:
+Note that in this work we also used the ImageNet100 dataset, which is x10 smaller than ImageNet. To create ImageNet100 run the following command:
 ```bash
 mkdir -p data/ilsvrc100/train
 mkdir -p data/ilsvrc100/val
@@ -85,9 +75,17 @@ code_root/
     ├── ilsvrc/
           ├── train/
           └── val/
-    ├── ilsvrc100/
+    └── ilsvrc100/
           ├── train/
           └── val/
+```
+
+#### MSCoco
+Please download [COCO 2017 dataset](https://cocodataset.org/) and organize it in the following structure:
+
+```
+code_root/
+└── data/
     └── MSCoco/
         ├── train2017/
         ├── val2017/
@@ -95,6 +93,25 @@ code_root/
         	├── instances_train2017.json
         	└── instances_val2017.json
 ```
+#### Pascal VOC
+Download [Pascal VOC](http://host.robots.ox.ac.uk/pascal/VOC/) dataset (2012trainval, 2007trainval, and 2007test):
+```
+cd data/pascal
+wget http://host.robots.ox.ac.uk:8080/pascal/VOC/voc2012/VOCtrainval_11-May-2012.tar
+wget http://host.robots.ox.ac.uk/pascal/VOC/voc2007/VOCtrainval_06-Nov-2007.tar
+wget http://host.robots.ox.ac.uk/pascal/VOC/voc2007/VOCtest_06-Nov-2007.tar
+tar -xvf *
+```
+The files should be organized in the following structure:
+```
+code_root/
+└── data/
+    └── pascal/
+        └── VOCdevkit/
+        	├── VOC2007
+        	└── VOC2012
+```
+
 ### Create ImageNet Selective Search boxes:
 Download the precomputed ImageNet boxes and extract in the cache folder:
 ```
@@ -120,7 +137,7 @@ code_root/
     └── ilsvrc/
 ```
 
-### Training
+### Pretraining on ImageNet
 
 The command for pretraining DETReg on 8 GPUs on ImageNet100 is as following:
 ```bash
@@ -129,6 +146,9 @@ GPUS_PER_NODE=8 ./tools/run_dist_launch.sh 8 ./configs/DETReg_top30_in100.sh --b
 Training takes around 1.5 days with 8 NVIDIA V100 GPUs, you can download a pretrained model (see below) if you want to skip this step.
 
 After pretraining, a checkpoint is saved in ```exps/DETReg_top30_in100/checkpoint.pth```. To fine tune it over different coco settings use the following commands:
+
+### Finetuning on MSCoco
+
 Fine tuning on full COCO (should take 2 days with 8 NVIDIA V100 GPUs):
 ```bash
 GPUS_PER_NODE=8 ./tools/run_dist_launch.sh 8 ./configs/DETReg_fine_tune_full_coco.sh
@@ -150,6 +170,17 @@ Fine tuning on 10%
 ```bash
 GPUS_PER_NODE=8 ./tools/run_dist_launch.sh 8 ./configs/DETReg_fine_tune_10pct_coco.sh --batch_size 1
 ```
+
+### Finetuning on Pascal VOC
+Fine tune on full Pascal:
+```bash
+GPUS_PER_NODE=8 ./tools/run_dist_launch.sh 8 ./configs/DETReg_fine_tune_full_pascal.sh --batch_size 4 --epochs 100 --lr_drop 70
+```
+Fine tune on 10% of Pascal:
+```bash
+GPUS_PER_NODE=2 ./tools/run_dist_launch.sh 2 ./configs/DETReg_fine_tune_10pct_pascal.sh --batch_size 4 --epochs 200 --lr_drop 150
+```
+
 
 
 ### Evaluation

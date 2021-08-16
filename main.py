@@ -237,8 +237,10 @@ def main(args):
         # We also evaluate AP during panoptic training, on original coco DS
         coco_val = datasets.coco.build("val", args)
         base_ds = get_coco_api_from_dataset(coco_val)
-    else:
+    elif args.dataset_file == "coco":
         base_ds = get_coco_api_from_dataset(dataset_val)
+    else:
+        base_ds = dataset_val
 
     if args.frozen_weights is not None:
         checkpoint = torch.load(args.frozen_weights, map_location='cpu')
@@ -287,7 +289,7 @@ def main(args):
             lr_scheduler.step(lr_scheduler.last_epoch)
             args.start_epoch = checkpoint['epoch'] + 1
         # check the resumed model
-        if (not args.eval and not args.viz and args.dataset == 'coco'):
+        if (not args.eval and not args.viz and args.dataset in ['coco', 'voc']):
             test_stats, coco_evaluator = evaluate(
                 model, criterion, postprocessors, data_loader_val, base_ds, device, args.output_dir
             )
@@ -325,7 +327,7 @@ def main(args):
                     'epoch': epoch,
                     'args': args,
                 }, checkpoint_path)
-        if args.dataset == 'coco' and epoch % args.eval_every == 0:
+        if args.dataset in ['coco', 'voc'] and epoch % args.eval_every == 0:
             test_stats, coco_evaluator = evaluate(
                 model, criterion, postprocessors, data_loader_val, base_ds, device, args.output_dir
             )

@@ -18,6 +18,7 @@ from typing import Iterable
 import torch
 import util.misc as utils
 from datasets.coco_eval import CocoEvaluator
+from datasets.voc_eval import VocEvaluator
 from datasets.panoptic_eval import PanopticEvaluator
 from datasets.data_prefetcher import data_prefetcher
 from datasets.selfdet import selective_search
@@ -96,7 +97,7 @@ def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, out
     header = 'Test:'
 
     iou_types = tuple(k for k in ('segm', 'bbox') if k in postprocessors.keys())
-    coco_evaluator = CocoEvaluator(base_ds, iou_types)
+    coco_evaluator = (CocoEvaluator if 'COCO' in type(base_ds).__name__ else VocEvaluator)(base_ds, iou_types)
     # coco_evaluator.coco_eval[iou_types[0]].params.iouThrs = [0, 0.1, 0.5, 0.75]
 
     panoptic_evaluator = None
@@ -122,18 +123,6 @@ def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, out
         
         outputs = model(samples)
 
-        if 'savedet' in output_dir:
-            os.makedirs(output_dir, exist_ok = True)
-            for i, target in enumerate(targets):
-                image_id = target['image_id'].item()
-                pred_logits = outputs['pred_logits'][i]
-                pred_boxes = outputs['pred_boxes'][i]
-                img_h, img_w = target['orig_size']
-                pred_boxes_ = box_cxcywh_to_xyxy(pred_boxes) * torch.stack([img_w, img_h, img_w, img_h], dim=-1)
-                
-                torch.save(dict(image_id = image_id, target = target, pred_logits = pred_logits, pred_boxes = pred_boxes, pred_boxes_ = pred_boxes_), os.path.join(output_dir, str(image_id) + '.pt'))
-
-
         loss_dict = criterion(outputs, targets)
         weight_dict = criterion.weight_dict
 
@@ -150,7 +139,18 @@ def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, out
 
         orig_target_sizes = torch.stack([t["orig_size"] for t in targets], dim=0)
         results = postprocessors['bbox'](outputs, orig_target_sizes)
-        
+
+        if 'savedet' in output_dir:
+            os.makedirs(output_dir, exist_ok=True)
+            for i, target in enumerate(targets):
+                image_id = target['image_id'].item()
+                pred_logits = outputs['pred_logits'][i]
+                pred_boxes = outputs['pred_boxes'][i]
+                img_h, img_w = target['orig_size']
+                pred_boxes_ = box_cxcywh_to_xyxy(pred_boxes) * torch.stack([img_w, img_h, img_w, img_h], dim=-1)
+                torch.save(dict(image_id=image_id, target=target, pred_logits=pred_logits, pred_boxes=pred_boxes,
+                                pred_boxes_=pred_boxes_), os.path.join(output_dir, str(image_id) + '.pt'))
+
         if 'segm' in postprocessors.keys():
             target_sizes = torch.stack([t["size"] for t in targets], dim=0)
             results = postprocessors['segm'](results, outputs, orig_target_sizes, target_sizes)
@@ -204,11 +204,7 @@ def viz(model, criterion, postprocessors, data_loader, base_ds, device, output_d
 
     metric_logger = utils.MetricLogger(delimiter="  ")
     metric_logger.add_meter('class_error', utils.SmoothedValue(window_size=1, fmt='{value:.2f}'))
-    header = 'Test:'
 
-    iou_types = tuple(k for k in ('segm', 'bbox') if k in postprocessors.keys())
-    coco_evaluator = CocoEvaluator(base_ds, iou_types)
-    # coco_evaluator.coco_eval[iou_types[0]].params.iouThrs = [0, 0.1, 0.5, 0.75]
     for samples, targets in data_loader:
         samples = samples.to(device)
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
