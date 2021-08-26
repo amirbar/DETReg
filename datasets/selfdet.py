@@ -68,34 +68,27 @@ class SelfDet(Dataset):
         img_path = self.files[item]
         img = Image.open(img_path).convert("RGB")
         w, h = img.size
+
         if self.strategy == 'topk':
-            boxes = selective_search(img, h, w, res_size=128)
+            boxes = self.load_from_cache(item, img, h, w)
             boxes = boxes[:self.max_prop]
         elif self.strategy == 'mc':
-            boxes = self.get_boxes_from_ss_or_cache(self.dist2, h, img, item, w)
+            boxes = self.load_from_cache(item, img, h, w)
+            boxes_indicators = np.where(np.random.binomial(1, p=self.dist2[:len(boxes)]))[0]
+            boxes = boxes[boxes_indicators]
         elif self.strategy == "random":
-            fn = random.choice(self.files).split('/')[-1].split('.')[0] + '.npy'
-            fp = os.path.join(self.cache_dir, fn)
-            try:
-                with open(fp, 'rb') as f:
-                    boxes = np.load(f)
-            except FileNotFoundError:
-                boxes = selective_search(img, h, w, res_size=None)
-                with open(fp, 'wb') as f:
-                    np.save(f, boxes)
+            boxes = self.load_from_cache(random.choice(range(self.files)), None, None, None) # relies on cache for now
             boxes = boxes[:self.max_prop]
         else:
             raise ValueError("No such strategy")
 
-        # from util.plot_utils import plot_opencv, plot_results
+        # # uncomment for debug: visualize image and patches
+        # from util.plot_utils import plot_results
         # from matplotlib import pyplot as plt
-        # output = np.array(img)
-        # plot_opencv(boxes[:1], output)
         # plt.figure()
-        # plot_results(np.array(img), np.zeros(1), boxes[:1], plt.gca(), norm=False)
+        # boxes = selective_search(img, h, w, res_size=128)
+        # plot_results(np.array(img), np.zeros(10), boxes[:10], plt.gca(), norm=False)
         # plt.show()
-        # plt.figure()
-        # plt.imshow(patches[0])
 
         if len(boxes) < 2:
             return self.__getitem__(random.randint(0, len(self.files) - 1))
@@ -110,18 +103,9 @@ class SelfDet(Dataset):
         img, target = self.detection_transform(img, target)
         if len(target['boxes']) < 2:
             return self.__getitem__(random.randint(0, len(self.files) - 1))
-        # crop_size = 96  # TODO: add as hyperparam
-        # target['patches'] = crop_bbox(img.unsqueeze(0).repeat_interleave(len(target['boxes']), 0), target['boxes'],
-        #                               crop_size, crop_size)
-
-        # from matplotlib import pyplot as plt
-        # plot_prediction(img.unsqueeze(0), target['boxes'][:1].unsqueeze(1), torch.zeros(1, 1, 2), plot_prob=False)
-        # plt.show()
-        # plot_prediction(target['patches'][0].unsqueeze(0), torch.zeros_like(target['boxes'][:1].unsqueeze(1)), torch.zeros(1, 1, 2), plot_prob=False)
-        # plt.show()
         return img, target
 
-    def get_boxes_from_ss_or_cache(self, func, h, img, item, w):
+    def load_from_cache(self, item, img, h, w):
         fn = self.files[item].split('/')[-1].split('.')[0] + '.npy'
         fp = os.path.join(self.cache_dir, fn)
         try:
@@ -131,10 +115,7 @@ class SelfDet(Dataset):
             boxes = selective_search(img, h, w, res_size=None)
             with open(fp, 'wb') as f:
                 np.save(f, boxes)
-        boxes_indicators = np.where(np.random.binomial(1, p=func[:len(boxes)]))[0]
-        boxes = boxes[boxes_indicators]
         return boxes
-
 
 def selective_search(img, h, w, res_size=128):
     img_det = np.array(img)

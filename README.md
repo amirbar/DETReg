@@ -113,6 +113,9 @@ code_root/
 ```
 
 ### Create ImageNet Selective Search boxes:
+
+Note: if you do not follow the following steps to create the boxes cache, this will happen on the run and slow training. 
+
 Download the precomputed ImageNet boxes and extract in the cache folder:
 ```
 mkdir -p <code_root>/cache/ilsvrc && cd <code_root>/cache/ilsvrc 
