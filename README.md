@@ -12,7 +12,7 @@ Motivated by the two tasks underlying object detection: **localization** and **c
 The categorization signal comes from an object embedding loss that encourages invariant object representations, from which the object category can be inferred. 
 We show how to combine these two signals to train the Deformable DETR detection architecture from large amounts of unlabeled data. DETReg improves the performance over competitive baselines and previous self-supervised methods on standard benchmarks like MS COCO and PASCAL VOC. DETReg also outperforms previous supervised and unsupervised baseline approaches on low-data regime when trained with only 1%, 2%, 5%, and 10% of the labeled data on MS COCO.
 
-## News
+## Demo
 
 Interact with the DETReg pretrained model in a [Google Colab](https://colab.research.google.com/drive/1ByFXJClyzNVelS7YdT53_bMbwYeMoeNb?usp=sharing)! 
 
