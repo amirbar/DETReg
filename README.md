@@ -221,6 +221,10 @@ If you found this code helpful, feel free to cite our work:
 ## Related Works
 If you found DETReg useful, consider checking out these related works as well: [ReSim](https://github.com/Tete-Xiao/ReSim), [SwAV](https://github.com/facebookresearch/swav), [DETR](https://github.com/facebookresearch/detr), [UP-DETR](https://github.com/dddzg/up-detr), and [Deformable DETR](https://github.com/fundamentalvision/Deformable-DETR).
 
+## Change Log
+* 9/19/21 - Fixed Pascal VOC training with %X of training data
+
+
 ## Acknowlegments
 DETReg builds on previous works code base such as [Deformable DETR](https://github.com/fundamentalvision/Deformable-DETR) and [UP-DETR](https://github.com/dddzg/up-detr). If you found DETReg useful please consider citing these works as well.
 
