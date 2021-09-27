@@ -68,8 +68,9 @@ Note that in this work we also used the ImageNet100 dataset, which is x10 smalle
 ```bash
 mkdir -p data/ilsvrc100/train
 mkdir -p data/ilsvrc100/val
-while read line; do ln -s <code_root>/data/ilsvrc/train/$line <code_root>/data/ilsvrc100/train/$line; done < <code_root>/datasets/category.txt
-while read line; do ln -s <code_root>/data/ilsvrc/val/$line <code_root>/data/ilsvrc100/val/$line; done < <code_root>/datasets/category.txt
+code_root=/path/to/code_root
+while read line; do ln -s "${code_root}/data/ilsvrc/train/$line" ${code_root}/data/ilsvrc100/train/$line"; done < "${code_root}/datasets/category.txt"
+while read line; do ln -s "${code_root}/data/ilsvrc/val/$line" "${code_root}/data/ilsvrc100/val/$line"; done < "${code_root>/datasets/category.txt"
 ```
 
 This should results with the following structure:
