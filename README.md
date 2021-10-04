@@ -126,7 +126,7 @@ Note: if you do not follow the following steps to create the boxes cache, this w
 
 Download the precomputed ImageNet boxes and extract in the cache folder:
 ```bash
-mkdir -p ${code_root}/cache/ilsvrc && cd <code_root>/cache/ilsvrc 
+mkdir -p ${code_root}/cache/ilsvrc && cd ${code_root}/cache/ilsvrc
 wget https://github.com/amirbar/DETReg/releases/download/1.0.0/ss_box_cache.tar.gz
 tar -xf ss_box_cache.tar.gz
 ```
