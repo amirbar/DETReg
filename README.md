@@ -100,12 +100,15 @@ code_root/
 ```
 #### Pascal VOC
 Download [Pascal VOC](http://host.robots.ox.ac.uk/pascal/VOC/) dataset (2012trainval, 2007trainval, and 2007test):
-```
+```bash
+mkdir -p data/pascal
 cd data/pascal
 wget http://host.robots.ox.ac.uk:8080/pascal/VOC/voc2012/VOCtrainval_11-May-2012.tar
 wget http://host.robots.ox.ac.uk/pascal/VOC/voc2007/VOCtrainval_06-Nov-2007.tar
 wget http://host.robots.ox.ac.uk/pascal/VOC/voc2007/VOCtest_06-Nov-2007.tar
-tar -xvf *
+tar -xvf VOCtrainval_11-May-2012.tar
+tar -xvf VOCtrainval_06-Nov-2007.tar
+tar -xvf VOCtest_06-Nov-2007.tar
 ```
 The files should be organized in the following structure:
 ```
@@ -122,8 +125,8 @@ code_root/
 Note: if you do not follow the following steps to create the boxes cache, this will happen on the run and slow training. 
 
 Download the precomputed ImageNet boxes and extract in the cache folder:
-```
-mkdir -p <code_root>/cache/ilsvrc && cd <code_root>/cache/ilsvrc 
+```bash
+mkdir -p ${code_root}/cache/ilsvrc && cd ${code_root}/cache/ilsvrc
 wget https://github.com/amirbar/DETReg/releases/download/1.0.0/ss_box_cache.tar.gz
 tar -xf ss_box_cache.tar.gz
 ```
