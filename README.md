@@ -120,35 +120,12 @@ code_root/
         	└── VOC2012
 ```
 
-### Create ImageNet Selective Search boxes:
-
-Note: if you do not follow the following steps to create the boxes cache, this will happen on the run and slow training. 
-
-Download the precomputed ImageNet boxes and extract in the cache folder:
-```bash
-mkdir -p ${code_root}/cache/ilsvrc && cd ${code_root}/cache/ilsvrc
-wget https://github.com/amirbar/DETReg/releases/download/1.0.0/ss_box_cache.tar.gz
-tar -xf ss_box_cache.tar.gz
-```
-
-### Alternatively, you can compute Selective Search boxes yourself:
-To create selective search boxes for ImageNet100 on a single machine, run the following command (set num_processes): 
-```bash
-python -m datasets.cache_ss --dataset imagenet100 --part 0 --num_m 1 --num_p <num_processes_to_use> 
-```
-To speed up the creation of boxes, change the arguments accordingly and run the following command on each different machine: 
-```bash
-python -m datasets.cache_ss --dataset imagenet100 --part <machine_number> --num_m <num_machines> --num_p <num_processes_to_use> 
-```
-
-The cached boxes are saved in the following structure:
-```
-code_root/
-└── cache/
-    └── ilsvrc/
-```
-
 ### Pretraining on ImageNet
+
+The command for pretraining DETReg on 8 GPUs on ImageNet is as following:
+```bash
+GPUS_PER_NODE=8 ./tools/run_dist_launch.sh 8 ./configs/DETReg_top30_in.sh --batch_size 24 --num_workers 8
+```
 
 The command for pretraining DETReg on 8 GPUs on ImageNet100 is as following:
 ```bash
