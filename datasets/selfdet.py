@@ -69,8 +69,8 @@ class SelfDet(Dataset):
         img = Image.open(img_path).convert("RGB")
         w, h = img.size
 
-        if self.strategy == 'topk':
-            boxes = self.load_from_cache(item, img, h, w)
+        if self.strategy == 'topk': # selective search has randomness and without caching, the results are better.
+            boxes = selective_search(img, h, w, res_size=128)
             boxes = boxes[:self.max_prop]
         elif self.strategy == 'mc':
             boxes = self.load_from_cache(item, img, h, w)
