@@ -156,30 +156,41 @@ GPUS_PER_NODE=8 ./tools/run_dist_launch.sh 8 ./configs/DETReg_top30_in100.sh --b
 ```
 Training takes around 1.5 days with 8 NVIDIA V100 GPUs, you can download a pretrained model (see below) if you want to skip this step.
 
-After pretraining, a checkpoint is saved in ```exps/DETReg_top30_in100/checkpoint.pth```. To fine tune it over different coco settings use the following commands:
+After pretraining, a checkpoint is saved in ```exps/DETReg_top30_in/checkpoint.pth```. To fine tune it over different coco settings use the following commands:
 
-### Finetuning on MSCoco
+### Pretraining on MSCoco
+The command for pretraining DETReg on 8 GPUs on MSCoco is as following:
+```bash
+GPUS_PER_NODE=8 ./tools/run_dist_launch.sh 8 ./configs/DETReg_top30_coco.sh --batch_size 24 --num_workers 8
+```
+
+
+### Finetuning on MSCoco from ImageNet pretraining
 
 Fine tuning on full COCO (should take 2 days with 8 NVIDIA V100 GPUs):
 ```bash
 GPUS_PER_NODE=8 ./tools/run_dist_launch.sh 8 ./configs/DETReg_fine_tune_full_coco.sh
 ```
-For smaller subsets which trains faster, you can use smaller number of gpus (e.g 4 with batch size 2)/
+
+This assumes a checkpoint exists in `exps/DETReg_top30_in/checkpoint.pth`.
+
+### Finetuning on MSCoco low-data regime, from full MSCoco pretraining (Semi-Supervised Learning setting)
+
 Fine tuning on 1%
 ```bash
-GPUS_PER_NODE=4 ./tools/run_dist_launch.sh 4 ./configs/DETReg_fine_tune_1pct_coco.sh --batch_size 2
+GPUS_PER_NODE=8 ./tools/run_dist_launch.sh 8 ./configs/DETReg_fine_tune_1pct_coco.sh --batch_size 3
 ```
 Fine tuning on 2%
 ```bash
-GPUS_PER_NODE=4 ./tools/run_dist_launch.sh 4 ./configs/DETReg_fine_tune_2pct_coco.sh --batch_size 2
+GPUS_PER_NODE=8 ./tools/run_dist_launch.sh 8 ./configs/DETReg_fine_tune_2pct_coco.sh --batch_size 3
 ```
 Fine tuning on 5%
 ```bash
-GPUS_PER_NODE=8 ./tools/run_dist_launch.sh 8 ./configs/DETReg_fine_tune_5pct_coco.sh --batch_size 1
+GPUS_PER_NODE=8 ./tools/run_dist_launch.sh 8 ./configs/DETReg_fine_tune_5pct_coco.sh --batch_size 3
 ```
 Fine tuning on 10%
 ```bash
-GPUS_PER_NODE=8 ./tools/run_dist_launch.sh 8 ./configs/DETReg_fine_tune_10pct_coco.sh --batch_size 1
+GPUS_PER_NODE=8 ./tools/run_dist_launch.sh 8 ./configs/DETReg_fine_tune_10pct_coco.sh --batch_size 3
 ```
 
 ### Finetuning on Pascal VOC
@@ -226,6 +237,8 @@ If you found this code helpful, feel free to cite our work:
 If you found DETReg useful, consider checking out these related works as well: [ReSim](https://github.com/Tete-Xiao/ReSim), [SwAV](https://github.com/facebookresearch/swav), [DETR](https://github.com/facebookresearch/detr), [UP-DETR](https://github.com/dddzg/up-detr), and [Deformable DETR](https://github.com/fundamentalvision/Deformable-DETR).
 
 ## Change Log
+* 12/12/21 - Update experiments hyperparams in accordance with new paper version
+* 12/12/21 - Avoid box caching on TopK policy (bug fix)
 * 9/19/21 - Fixed Pascal VOC training with %X of training data
 
 
