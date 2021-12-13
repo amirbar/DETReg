@@ -7,10 +7,7 @@ This repository is the implementation of DETReg, see [Project Page](https://amir
 
 ## Introduction
 
-DETReg is an unsupervised pretraining approach for object **DE**tection with **TR**ansformers using **Reg**ion priors. 
-Motivated by the two tasks underlying object detection: **localization** and **categorization**, we combine two complementary signals for self-supervision. For an object localization signal, we use pseudo ground truth object bounding boxes from an off-the-shelf unsupervised region proposal method, Selective Search, which does not require training data and can detect objects at a high recall rate and very low precision.
-The categorization signal comes from an object embedding loss that encourages invariant object representations, from which the object category can be inferred. 
-We show how to combine these two signals to train the Deformable DETR detection architecture from large amounts of unlabeled data. DETReg improves the performance over competitive baselines and previous self-supervised methods on standard benchmarks like MS COCO and PASCAL VOC. DETReg also outperforms previous supervised and unsupervised baseline approaches on low-data regime when trained with only 1%, 2%, 5%, and 10% of the labeled data on MS COCO.
+Recent self-supervised pretraining methods for object detection largely focus on pretraining the backbone of the object detector, neglecting key parts of detection architecture. Instead, we introduce DETReg, a new self-supervised method that pretrains the entire object detection network, including the object localization and embedding components. During pretraining, DETReg predicts object localizations to match the localizations from an unsupervised region proposal generator and simultaneously aligns the corresponding feature embeddings with embeddings from a self-supervised image encoder. We implement DETReg using the DETR family of detectors and show that it improves over competitive baselines when finetuned on COCO, PASCAL VOC, and Airbus Ship benchmarks. In low-data regimes, including semi-supervised and few-shot learning settings, DETReg establishes many state-of-the-art results, e.g., on COCO we see a +6.0 AP improvement for 10-shot detection and +3.5 AP improvement when training with only 1% of the labels.
 
 ## Demo
 
