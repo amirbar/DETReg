@@ -122,9 +122,13 @@ code_root/
 
 ### Pretraining on ImageNet
 
-The command for pretraining DETReg on 8 GPUs on ImageNet is as following:
+The command for pretraining DETReg, based on Deformable-DETR, on 8 GPUs on ImageNet is as follows:
 ```bash
 GPUS_PER_NODE=8 ./tools/run_dist_launch.sh 8 ./configs/DETReg_top30_in.sh --batch_size 24 --num_workers 8
+```
+Using underlying DETR architecture:
+```bash
+GPUS_PER_NODE=8 ./tools/run_dist_launch.sh 8 ./configs/DETReg_top30_in_detr.sh --batch_size 24 --num_workers 8
 ```
 
 The command for pretraining DETReg on 8 GPUs on ImageNet100 is as following:
@@ -190,11 +194,14 @@ To evaluate a finetuned model, use the following command from the project basedi
 ./configs/<config file>.sh --resume exps/<config file>/checkpoint.pth --eval
 ```
 
-### Pretrained Models
+### Pretrained Models Zoo
 
-- [Pretrained ImageNet weights](https://github.com/amirbar/DETReg/releases/download/1.0.0/checkpoint_imagenet.pth) 
-- [Finetuned COCO weights](https://github.com/amirbar/DETReg/releases/download/1.0.0/full_coco_finetune.pth)
-
+| Model  | Type        | Architecture    | Dataset  | Epochs | Checkpoint                                                                                     |
+|--------|-------------|-----------------|----------|--------|------------------------------------------------------------------------------------------------|
+| DETReg | Pretraining | Deformable DETR | ImageNet | 5      | [link](https://github.com/amirbar/DETReg/releases/download/1.0.0/checkpoint_imagenet.pth)      |
+| DETReg | Pretraining | DETR            | ImageNet | 60     | [link](https://github.com/amirbar/DETReg/releases/download/1.0.0/checkpoint_imagenet_detr.pth) |
+| DETReg | Pretraining | Deformable DETR | MSCoco   | 50     | [link](https://github.com/amirbar/DETReg/releases/download/1.0.0/checkpoint_coco.pth)          |
+| DETReg | Finetuned   | Deformable DETR | MSCoco   | 50     | [link](https://github.com/amirbar/DETReg/releases/download/1.0.0/full_coco_finetune.pth)       |
 
 ## Citation
 If you found this code helpful, feel free to cite our work: 
@@ -214,6 +221,7 @@ If you found this code helpful, feel free to cite our work:
 If you found DETReg useful, consider checking out these related works as well: [ReSim](https://github.com/Tete-Xiao/ReSim), [SwAV](https://github.com/facebookresearch/swav), [DETR](https://github.com/facebookresearch/detr), [UP-DETR](https://github.com/dddzg/up-detr), and [Deformable DETR](https://github.com/fundamentalvision/Deformable-DETR).
 
 ## Change Log
+* 12/13/21 - Add DETR architecture
 * 12/12/21 - Update experiments hyperparams in accordance with new paper version
 * 12/12/21 - Avoid box caching on TopK policy (bug fix)
 * 9/19/21 - Fixed Pascal VOC training with %X of training data
