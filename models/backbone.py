@@ -150,6 +150,7 @@ def build_backbone(args):
     return_interm_layers = args.masks or (args.num_feature_levels > 1)
     backbone = Backbone(args.backbone, train_backbone, return_interm_layers, args.dilation, load_backbone=args.load_backbone)
     model = Joiner(backbone, position_embedding)
+    model.num_channels = backbone.num_channels
     return model
 
 def build_swav_backbone(args, device):
