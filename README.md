@@ -1,4 +1,4 @@
-# DETReg: Unsupervised Pretraining with Region Priors for Object Detection
+# DETReg: Unsupervised Pretraining with Region Priors for Object Detection (CVPR 2022)
 ### [Amir Bar](https://amirbar.net), [Xin Wang](https://xinw.ai/), [Vadim Kantorov](http://vadimkantorov.com/), [Colorado J Reed](https://people.eecs.berkeley.edu/~cjrd/), [Roei Herzig](https://roeiherz.github.io/), [Gal Chechik](https://chechiklab.biu.ac.il/), [Anna Rohrbach](https://anna-rohrbach.net/), [Trevor Darrell](https://people.eecs.berkeley.edu/~trevor/), [Amir Globerson](http://www.cs.tau.ac.il/~gamir/)
 ![DETReg](./figs/illustration.png)
   
