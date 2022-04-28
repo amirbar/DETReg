@@ -218,7 +218,7 @@ If you found this code helpful, feel free to cite our work:
 If you found DETReg useful, consider checking out these related works as well: [ReSim](https://github.com/Tete-Xiao/ReSim), [SwAV](https://github.com/facebookresearch/swav), [DETR](https://github.com/facebookresearch/detr), [UP-DETR](https://github.com/dddzg/up-detr), and [Deformable DETR](https://github.com/fundamentalvision/Deformable-DETR).
 
 ## Change Log
-* 04/28/22 - Bug fix in multiprocessing, up-to-date results [here](docs/full-semi-sup.png) 
+* 04/28/22 - Bug fix in multiprocessing, affects Table 5 results. Up-to-date results [here](docs/full-semi-sup.png), new paper version will be uploaded tonight. 
 * 12/13/21 - Add DETR architecture
 * 12/12/21 - Update experiments hyperparams in accordance with new paper version
 * 12/12/21 - Avoid box caching on TopK policy (bug fix)
