@@ -296,9 +296,9 @@ def get_datasets(args):
         from datasets.torchvision_datasets.voc import VOCDetection
         from datasets.coco import make_coco_transforms
         dataset_train = VOCDetection(args.voc_path, ["2007", "2012"], image_sets=['trainval', 'trainval'],
-                                     transforms=make_coco_transforms('train'), filter_pct=args.filter_pct)
+                                     transforms=make_coco_transforms('train'), filter_pct=args.filter_pct, seed=args.seed)
         dataset_val = VOCDetection(args.voc_path, ["2007"], image_sets=[
-                                   'test'], transforms=make_coco_transforms('val'))
+                                   'test'], transforms=make_coco_transforms('val'), seed=args.seed)
     else:
         raise ValueError(f"Wrong dataset name: {args.dataset}")
 
