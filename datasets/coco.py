@@ -24,7 +24,7 @@ import datasets.transforms as T
 
 
 class CocoDetection(TvCocoDetection):
-    def __init__(self, img_folder, ann_file, transforms, return_masks, cache_mode=False, local_rank=0, local_size=1, no_cats=False, filter_pct=-1):
+    def __init__(self, img_folder, ann_file, transforms, return_masks, cache_mode=False, local_rank=0, local_size=1, no_cats=False, filter_pct=-1, seed=42):
         super(CocoDetection, self).__init__(img_folder, ann_file,
                                             cache_mode=cache_mode, local_rank=local_rank, local_size=local_size)
         self._transforms = transforms
@@ -32,7 +32,7 @@ class CocoDetection(TvCocoDetection):
         self.no_cats = no_cats
         if filter_pct > 0:
             num_keep = float(len(self.ids))*filter_pct
-            self.ids = np.random.choice(self.ids, size=round(num_keep), replace=False).tolist()
+            self.ids = np.random.default_rng(seed).choice(self.ids, size=round(num_keep), replace=False).tolist()
 
     def __getitem__(self, idx):
         img, target = super(CocoDetection, self).__getitem__(idx)
@@ -182,5 +182,5 @@ def build(image_set, args):
     if image_set == 'train' and args.filter_pct > 0:
         filter_pct = args.filter_pct
     dataset = CocoDetection(img_folder, ann_file, transforms=make_coco_transforms(image_set), return_masks=args.masks,
-                            cache_mode=args.cache_mode, local_rank=get_local_rank(), local_size=get_local_size(), no_cats=no_cats, filter_pct=filter_pct)
+                            cache_mode=args.cache_mode, local_rank=get_local_rank(), local_size=get_local_size(), no_cats=no_cats, filter_pct=filter_pct, seed=args.seed)
     return dataset

@@ -92,7 +92,8 @@ class VOCDetection(VisionDataset):
                  target_transform=None,
                  transforms=None,
                  no_cats=False,
-                 filter_pct=-1):
+                 filter_pct=-1,
+                 seed=42):
         super(VOCDetection, self).__init__(root, transforms, transform, target_transform)
         self.images = []
         self.annotations = []
@@ -131,7 +132,7 @@ class VOCDetection(VisionDataset):
 
         if filter_pct > 0:
             num_keep = float(len(self.imgids)) * filter_pct
-            keep = np.random.choice(np.arange(len(self.imgids)), size=round(num_keep), replace=False).tolist()
+            keep = np.random.default_rng(seed).choice(np.arange(len(self.imgids)), size=round(num_keep), replace=False).tolist()
             flt = lambda l: [l[i] for i in keep]
             self.image_set, self.images, self.annotations, self.imgids = map(flt, [self.image_set, self.images,
                                                                                    self.annotations, self.imgids])
