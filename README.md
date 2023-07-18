@@ -181,6 +181,17 @@ Fine tune on 10% of Pascal:
 GPUS_PER_NODE=2 ./tools/run_dist_launch.sh 2 ./configs/DETReg_fine_tune_10pct_pascal.sh --batch_size 4 --epochs 200 --lr_drop 150
 ```
 
+### Few-Shot object detection
+
+For few-shot, please follow [this](https://github.com/ucbdrive/few-shot-object-detection) code base for the dataloaders, classes, datasplits, etc.
+We used the few-shot dataset generated with seed = 0.  
+
+#### Using base classes (Table 3)
+Finetune DETReg on base classes (60 classes, 99k labeled images). Similar hyperparams as in MSCoco finetuning.
+Then fine-tune it on few-shot labeled images (80 classes, every class has 10 or 30 instances) for 150 epochs, lr drop after 140 epochs.
+
+#### No base classes (Table 3)
+Fine-tune DETReg on few-shot labeled images (80 classes, every class has 10 or 30 instances) for 1000 epochs, lr drop after 990 epochs.
 
 
 ### Evaluation
