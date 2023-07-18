@@ -199,6 +199,11 @@ To evaluate a finetuned model, use the following command from the project basedi
 | DETReg | Pretraining | DETR            | ImageNet | 60     | [link](https://github.com/amirbar/DETReg/releases/download/1.0.0/checkpoint_imagenet_detr.pth) |
 | DETReg | Pretraining | Deformable DETR | MSCoco   | 50     | [link](https://github.com/amirbar/DETReg/releases/download/1.0.0/checkpoint_coco.pth)          |
 | DETReg | Finetuned   | Deformable DETR | MSCoco   | 50     | [link](https://github.com/amirbar/DETReg/releases/download/1.0.0/full_coco_finetune.pth)       |
+| DETReg | 10 Shot (w/ baseclass)   | Deformable DETR | MSCoco   | 150     | [link](https://github.com/amirbar/DETReg/releases/download/1.0.0/detreg_10fs_baseclass.pth)       |
+| DETReg | 30 Shot (w/ baseclass)   | Deformable DETR | MSCoco   | 150     | [link](https://github.com/amirbar/DETReg/releases/download/1.0.0/detreg_30fs_baseclass.pth)       |
+| DETReg | 10 Shot (no baseclass)   | Deformable DETR | MSCoco   | 1000     | [link](https://github.com/amirbar/DETReg/releases/download/1.0.0/detreg_10fs_scratch.pth)       |
+| DETReg | 30 Shot (no baseclass)   | Deformable DETR | MSCoco   | 1000     | [link](https://github.com/amirbar/DETReg/releases/download/1.0.0/detreg_30fs_scratch.pth)       |
+
 
 ## Citation
 If you found this code helpful, feel free to cite our work: 
@@ -218,6 +223,8 @@ If you found this code helpful, feel free to cite our work:
 If you found DETReg useful, consider checking out these related works as well: [ReSim](https://github.com/Tete-Xiao/ReSim), [SwAV](https://github.com/facebookresearch/swav), [DETR](https://github.com/facebookresearch/detr), [UP-DETR](https://github.com/dddzg/up-detr), and [Deformable DETR](https://github.com/fundamentalvision/Deformable-DETR).
 
 ## Change Log
+* 07/17/23 - Release DETReg few-shot learning checkpoints pretrained finetuned on baseclass and from scratch (Table 3,4).
+* 07/17/23 - Update few-shot learning results. New paper version.
 * 04/28/22 - Bug fix in multiprocessing, affects Table 5 results. Up-to-date results [here](docs/full-semi-sup.png), new paper version will be uploaded tonight. 
 * 12/13/21 - Add DETR architecture
 * 12/12/21 - Update experiments hyperparams in accordance with new paper version
